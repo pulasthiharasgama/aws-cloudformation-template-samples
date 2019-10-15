@@ -1,0 +1,247 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Creates an ECS Cluster with AutoScaling Group",
+  "Parameters": {
+    "VPCID": {
+      "Type": "AWS::EC2::VPC::Id",
+      "Description": "VPC ID"
+    },
+    "SubnetIDAvailabilityZoneA": {
+      "Type": "AWS::EC2::Subnet::Id",
+      "Description": "Subnet ID of the first Availability Zone"
+    },
+    "SubnetIDAvailabilityZoneB": {
+      "Type": "AWS::EC2::Subnet::Id",
+      "Description": "Subnet ID of the second Availability Zone"
+    },
+    "InstanceType": {
+      "Type": "String",
+      "Description": "EC2 Instance Type of the ECS Container Instances"
+    },
+    "ImageID": {
+      "Type": "String",
+      "Description": "AMI ID of the ECS Container Instances"
+    },
+    "KeyPairName": {
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "Description": "Key Pair to be used for EC2 SSH"
+    },
+    "ClusterName": {
+      "Type": "String",
+      "Description": "Name for the newly created ECS Cluster"
+    },
+    "ClusterMinSize": {
+      "Type": "Number",
+      "Description": "Minimum Number of Instances the Cluster should maintain"
+    },
+    "ClusterMaxSize": {
+      "Type": "Number",
+      "Description": "Maximum Number of Instances the Cluster should maintain"
+    },
+    "ClusterDesiredSize": {
+      "Type": "Number",
+      "Description": "Desired Number of Instances the Cluster should maintain"
+    },
+    "EC2InstanceName": {
+      "Type": "String",
+      "Description": "Instance Name for the newly created Cluster Instances"
+    },
+    "EC2AssociatePublicIP": {
+      "Type": "String",
+      "AllowedValues": ["true", "false"],
+      "Description": "Should the Instances have a public IP address"
+    },
+    "EC2IAMInstanceProfileARN": {
+      "Type": "String",
+      "Description": "IAM role to be attached to the Cluster Instances"
+    },
+    "EnvironmentTag": {
+      "Type": "String",
+      "AllowedValues": ["DEV", "QA", "STAG", "PROD"],
+      "Description": "Environment Identifier"
+    }
+  },
+  "Resources": {
+    "ECSCluster": {
+      "Type": "AWS::ECS::Cluster",
+      "Properties": {
+        "ClusterName": {
+          "Ref": "ClusterName"
+        }
+      }
+    },
+    "ECSAutoScalingGroup": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "VPCZoneIdentifier": [
+          {
+            "Fn::Join": [
+              ",",
+              [
+                {
+                  "Ref": "SubnetIDAvailabilityZoneA"
+                },
+                {
+                  "Ref": "SubnetIDAvailabilityZoneB"
+                }
+              ]
+            ]
+          }
+        ],
+        "LaunchConfigurationName": {
+          "Ref": "InstanceLaunchConfiguration"
+        },
+        "MinSize": {
+          "Ref": "ClusterMinSize"
+        },
+        "MaxSize": {
+          "Ref": "ClusterMaxSize"
+        },
+        "DesiredCapacity": {
+          "Ref": "ClusterDesiredSize"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Ref": "EC2InstanceName"
+            },
+            "PropagateAtLaunch": "true"
+          },
+          {
+            "Key": "Environment",
+            "Value": {
+              "Ref": "EnvironmentTag"
+            },
+            "PropagateAtLaunch": "true"
+          }
+        ]
+      },
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Timeout": "PT15M"
+        }
+      },
+      "UpdatePolicy": {
+        "AutoScalingReplacingUpdate": {
+          "WillReplace": "true"
+        }
+      }
+    },
+    "InstanceLaunchConfiguration": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Properties": {
+        "AssociatePublicIpAddress": {
+          "Ref": "EC2AssociatePublicIP"
+        },
+        "IamInstanceProfile": {
+          "Ref": "EC2IAMInstanceProfileARN"
+        },
+        "ImageId": {
+          "Ref": "ImageID"
+        },
+        "SecurityGroups": [
+          {
+            "Ref": "ECSSecurityGroup"
+          }
+        ],
+        "InstanceType": {
+          "Ref": "InstanceType"
+        },
+        "KeyName": {
+          "Ref": "KeyPairName"
+        },
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash -xe\n",
+                "echo ECS_CLUSTER=",
+                {
+                  "Ref": "ECSCluster"
+                },
+                " >> /etc/ecs/ecs.config\n",
+                "yum install -y aws-cfn-bootstrap\n",
+                "/opt/aws/bin/cfn-signal -e $? ",
+                "         --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "         --resource ECSAutoScalingGroup ",
+                "         --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "ECSSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": {
+          "Fn::Join": [
+            " ",
+            [
+              "Security Group for ECS Cluster",
+              {
+                "Ref": "ClusterName"
+              }
+            ]
+          ]
+        },
+        "VpcId": {
+          "Ref": "VpcID"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                " ",
+                [
+                  {
+                    "Ref": "EC2InstanceName"
+                  },
+                  "sg"
+                ]
+              ]
+            }
+          },
+          {
+            "Key": "Environment",
+            "Value": {
+              "Ref": "EnvironmentTag"
+            }
+          }
+        ]
+      }
+    },
+    "ingress1": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "ECSSecurityGroup"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "80",
+        "ToPort": "80",
+        "CidrIp": "0.0.0.0/0"
+      }
+    },
+    "egress1": {
+      "Type": "AWS::EC2::SecurityGroupEgress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "ECSSecurityGroup"
+        },
+        "IpProtocol": "-1",
+        "CidrIp": "0.0.0.0/0"
+      }
+    }
+  }
+}
