@@ -42,6 +42,24 @@
       "Type": "Number",
       "Description": "Desired Number of Instances the Cluster should maintain"
     },
+    "EC2InstanceName": {
+      "Type": "String",
+      "Description": "Instance Name for the newly created Cluster Instances"
+    },
+    "EC2AssociatePublicIP": {
+      "Type": "String",
+      "AllowedValues": ["true", "false"],
+      "Description": "Should the Instances have a public IP address"
+    },
+    "EC2IAMInstanceProfileARN": {
+      "Type": "String",
+      "Description": "IAM role to be attached to the Cluster Instances"
+    },
+    "EnvironmentTag": {
+      "Type": "String",
+      "AllowedValues": ["DEV", "QA", "STAG", "PROD"],
+      "Description": "Environment Identifier"
+    },
     "ScalingCoolDown": {
       "Type": "Number",
       "Description": "Time in Seconds to wait after a scaling activity completes"
@@ -65,24 +83,6 @@
     "ScalingMetric": {
       "Type": "String",
       "Description": "The metric to use for scaling activity"
-    },
-    "EC2InstanceName": {
-      "Type": "String",
-      "Description": "Instance Name for the newly created Cluster Instances"
-    },
-    "EC2AssociatePublicIP": {
-      "Type": "String",
-      "AllowedValues": ["true", "false"],
-      "Description": "Should the Instances have a public IP address"
-    },
-    "EC2IAMInstanceProfileARN": {
-      "Type": "String",
-      "Description": "IAM role to be attached to the Cluster Instances"
-    },
-    "EnvironmentTag": {
-      "Type": "String",
-      "AllowedValues": ["DEV", "QA", "STAG", "PROD"],
-      "Description": "Environment Identifier"
     }
   },
   "Resources": {

@@ -1,0 +1,82 @@
+[
+  {
+    "ParameterKey": "VPCID",
+    "ParameterValue": "vpc-123a1234"
+  },
+  {
+    "ParameterKey": "SubnetIDAvailabilityZoneA",
+    "ParameterValue": "subnet-123abc23"
+  },
+  {
+    "ParameterKey": "SubnetIDAvailabilityZoneB",
+    "ParameterValue": "subnet-123abc24"
+  },
+  {
+    "ParameterKey": "InstanceType",
+    "ParameterValue": "t2.micro"
+  },
+  {
+    "ParameterKey": "ImageID",
+    "ParameterValue": "ami-12325f33"
+  },
+  {
+    "ParameterKey": "KeyPairName",
+    "ParameterValue": "MyNewKeyPair"
+  },
+  {
+    "ParameterKey": "ClusterName",
+    "ParameterValue": "my-new-cluster"
+  },
+  {
+    "ParameterKey": "ClusterMinSize",
+    "ParameterValue": "2"
+  },
+  {
+    "ParameterKey": "ClusterMaxSize",
+    "ParameterValue": "6"
+  },
+  {
+    "ParameterKey": "ClusterDesiredSize",
+    "ParameterValue": "3"
+  },
+  {
+    "ParameterKey": "EC2InstanceName",
+    "ParameterValue": "my-cluster-ec2"
+  },
+  {
+    "ParameterKey": "EC2AssociatePublicIP",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "EC2IAMInstanceProfileARN",
+    "ParameterValue": "myClusterIAMRole"
+  },
+  {
+    "ParameterKey": "EnvironmentTag",
+    "ParameterValue": "Development"
+  },
+  {
+    "ParameterKey": "ScalingCoolDown",
+    "ParameterValue": "300"
+  },
+  {
+    "ParameterKey": "ScalingEvaluationPeriod",
+    "ParameterValue": "1"
+  },
+  {
+    "ParameterKey": "ScalingUpperThreshold",
+    "ParameterValue": "60"
+  },
+  {
+    "ParameterKey": "ScalingLowerThreshold",
+    "ParameterValue": "20"
+  },
+  {
+    "ParameterKey": "ScalingPeriod",
+    "ParameterValue": "60"
+  },
+  {
+    "ParameterKey": "ScalingMetric",
+    "ParameterValue": "CPUUtilization"
+  }
+]
