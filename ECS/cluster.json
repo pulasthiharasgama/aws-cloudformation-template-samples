@@ -46,6 +46,26 @@
       "Type": "Number",
       "Description": "Time in Seconds to wait after a scaling activity completes"
     },
+    "ScalingEvaluationPeriod": {
+      "Type": "Number",
+      "Description": "The number of periods over which data is compared to the specified threshold"
+    },
+    "ScalingUpperThreshold": {
+      "Type": "Number",
+      "Description": "Upper percentage of CPUUtilization for Scale Up to happen"
+    },
+    "ScalingLowerThreshold": {
+      "Type": "Number",
+      "Description": "Lower percentage of CPUUtilization for Scale Down to happen"
+    },
+    "ScalingPeriod": {
+      "Type": "Number",
+      "Description": "The period, in seconds, over which the statistic is applied"
+    },
+    "ScalingMetric": {
+      "Type": "String",
+      "Description": "The metric to use for scaling activity"
+    },
     "EC2InstanceName": {
       "Type": "String",
       "Description": "Instance Name for the newly created Cluster Instances"
@@ -201,27 +221,80 @@
     "CPUAlarmHigh": {
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {
-        "EvaluationPeriods": "1",
-        "Statistic": "Average",
-        "Threshold": "10",
-        "AlarmDescription": "Alarm if CPU too high or metric disappears indicating instance is down",
-        "Period": "60",
+        "AlarmDescription": "Alarm if CPU Utilization is greater than 60%",
         "AlarmActions": [
           {
-            "Ref": "ScaleUpPolicy"
+            "Ref": "ASGScaleUpPolicy"
           }
         ],
+        "EvaluationPeriods": {
+          "Ref": "ScalingEvaluationPeriod"
+        },
+        "Statistic": "Average",
+        "Threshold": {
+          "Ref": "ScalingUpperThreshold"
+        },
+        "Period": {
+          "Ref": "ScalingPeriod"
+        },
         "Namespace": "AWS/EC2",
         "Dimensions": [
           {
             "Name": "AutoScalingGroupName",
             "Value": {
-              "Ref": "asGroup"
+              "Ref": "ECSAutoScalingGroup"
             }
           }
         ],
         "ComparisonOperator": "GreaterThanThreshold",
-        "MetricName": "CPUUtilization"
+        "MetricName": {
+          "Ref": "ScalingMetric"
+        }
+      }
+    },
+    "ASGScaleDownPolicy": {
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+      "Properties": {
+        "AdjustmentType": "ChangeInCapacity",
+        "AutoScalingGroupName": {
+          "Ref": "ECSAutoScalingGroup"
+        },
+        "PolicyType": "SimpleScaling",
+        "ScalingAdjustment": "-1"
+      }
+    },
+    "CPUAlarmLow": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmDescription": "Alarm if CPU Utilization is lower than 20%",
+        "AlarmActions": [
+          {
+            "Ref": "ASGScaleDownPolicy"
+          }
+        ],
+        "EvaluationPeriods": {
+          "Ref": "ScalingEvaluationPeriod"
+        },
+        "Statistic": "Average",
+        "Threshold": {
+          "Ref": "ScalingLowerThreshold"
+        },
+        "Period": {
+          "Ref": "ScalingPeriod"
+        },
+        "Namespace": "AWS/EC2",
+        "Dimensions": [
+          {
+            "Name": "AutoScalingGroupName",
+            "Value": {
+              "Ref": "ECSAutoScalingGroup"
+            }
+          }
+        ],
+        "ComparisonOperator": "LessThanThreshold",
+        "MetricName": {
+          "Ref": "ScalingMetric"
+        }
       }
     },
     "ECSSecurityGroup": {
